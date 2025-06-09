@@ -349,21 +349,31 @@ def calculate_archetypes(answers: dict):
     scores = defaultdict(int)
 
     # Aggregate scores for each archetype
-
     for q_num, selected in answers.items():
         if q_num in question_map and selected in question_map[q_num]:
             for archetype, points in question_map[q_num][selected]:
                 scores[archetype] += points
 
     # Sort archetypes by score
-
     sorted_archetypes = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+
+    # 👇 Fallback: if nothing matched, return empty results
+    if not sorted_archetypes:
+        print("⚠️ No valid answers matched the question_map.")
+        return {
+            "Primary": [],
+            "Secondary": [],
+            "Wildcard": []
+        }
+
     primary_score = sorted_archetypes[0][1]
-
     result = {
-        "Primary": [], "Secondary": [], "Wildcard": []}
-        
+        "Primary": [],
+        "Secondary": [],
+        "Wildcard": []
+    }
 
+    # Group archetypes by score
     for name, score in sorted_archetypes:
         if score == primary_score:
             result["Primary"].append(name)
@@ -371,5 +381,10 @@ def calculate_archetypes(answers: dict):
             result["Secondary"].append(name)
         elif score >= 0.65 * primary_score:
             result["Wildcard"].append(name)
+
+    # ✅ Debug logs (optional)
+    print("✔️ Raw Scores:", scores)
+    print("✔️ Sorted Archetypes:", sorted_archetypes)
+    print("✔️ Final Result:", result)
 
     return result
