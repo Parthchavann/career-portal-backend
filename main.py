@@ -24,7 +24,7 @@ class CoverLetterRequest(BaseModel):
 def submit_quiz(submission: QuizSubmission):
     try:
         result = calculate_archetypes(submission.answers)
-        return result
+        return  {"results": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
