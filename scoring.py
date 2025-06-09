@@ -1,4 +1,6 @@
 from collections import defaultdict
+from prettytable import PrettyTable
+
 
 question_map = {
     "Q1": {
@@ -348,23 +350,16 @@ question_map = {
 def calculate_archetypes(answers: dict):
     scores = defaultdict(int)
 
-    # Aggregate scores for each archetype
     for q_num, selected in answers.items():
         if q_num in question_map and selected in question_map[q_num]:
             for archetype, points in question_map[q_num][selected]:
                 scores[archetype] += points
 
-    # Sort archetypes by score
     sorted_archetypes = sorted(scores.items(), key=lambda x: x[1], reverse=True)
 
-    #  Fallback: if nothing matched, return empty results
     if not sorted_archetypes:
-        print("⚠ No valid answers matched the question_map.")
-        return {
-            "Primary": [],
-            "Secondary": [],
-            "Wildcard": []
-        }
+        print("No valid answers matched the question map.")
+        return None, {}
 
     primary_score = sorted_archetypes[0][1]
     result = {
@@ -373,7 +368,6 @@ def calculate_archetypes(answers: dict):
         "Wildcard": []
     }
 
-    # Group archetypes by score
     for name, score in sorted_archetypes:
         if score == primary_score:
             result["Primary"].append(name)
@@ -382,9 +376,19 @@ def calculate_archetypes(answers: dict):
         elif score >= 0.65 * primary_score:
             result["Wildcard"].append(name)
 
-    # Debug logs (optional)
-    print("Raw Scores:", scores)
-    print("Sorted Archetypes:", sorted_archetypes)
-    print("Final Result:", result)
+    # Display results using PrettyTable
+    table = PrettyTable()
+    table.field_names = ["Archetype", "Category"]
+    
+    for category, archetypes in result.items():
+        for archetype in archetypes:
+            table.add_row([archetype, category])
 
-    return result
+    print(table)
+    
+    return result["Primary"][0], result
+
+# Example usage:
+answers = {"Q1": "A", "Q2": "C", "Q3": "B", "Q4": "D"} 
+  
+calculate_archetypes(answers)
