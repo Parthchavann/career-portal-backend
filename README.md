@@ -1,16 +1,41 @@
 # P2P Assessment API
 
-FastAPI backend for quiz scoring and GPT-based cover letter generation.
+FastAPI backend for:
+- Archetype-based quiz scoring  
+- GPT-powered cover letter generation  
+- Resume analysis and job-role matching using TF-IDF and Piloterr
 
 ## Endpoints
 
-- `POST /submit-quiz`: Returns primary, secondary, and wildcard archetypes.
-- `POST /generate-cover-letter`: Returns a GPT-generated cover letter.
+- `POST /submit-quiz`:  
+  Returns primary, secondary, and wildcard archetypes based on answers.
+
+- `POST /generate-cover-letter`:  
+  Returns a GPT-generated cover letter based on user info and archetype.
+
+- `POST /analyze-resume`:  
+  Accepts resume and job description files (PDF).  
+  Uses PyMuPDF, TF-IDF, and cosine similarity to return a percentage match score.
+
+- `GET /suggest-roles?archetype=`:  
+  Integrates with the Piloterr API to return the top 3 job roles and average salary based on the user's archetype.
+
+## Tech Stack
+
+- **FastAPI** for backend API
+- **PyMuPDF** for PDF text extraction
+- **scikit-learn** for TF-IDF vectorization and cosine similarity
+- **OpenAI API** for LLM-based cover letter generation
+- **Piloterr API** for real-time job role and salary insights
 
 ## Deployment
 
-Deploy on Render. Make sure to set `OPENAI_API_KEY` as an environment variable.
+Make sure to set the following environment variables:
 
-## Frontend
+- `OPENAI_API_KEY`
+- `PILOTERR_API_KEY`
 
-Use jsPDF to export the generated letter to PDF.
+- Use **jsPDF** or browser print tools to export the generated cover letter to PDF.
+
+
+

@@ -1,5 +1,5 @@
 from collections import defaultdict
-from prettytable import PrettyTable
+from fastapi import HTTPException
 
 
 question_map = {
@@ -348,6 +348,9 @@ question_map = {
 }
 
 def calculate_archetypes(answers: dict):
+    if not answers:
+        raise HTTPException(status_code=400, detail="No answers provided.")
+
     scores = defaultdict(int)
 
     for q_num, selected in answers.items():
@@ -355,13 +358,12 @@ def calculate_archetypes(answers: dict):
             for archetype, points in question_map[q_num][selected]:
                 scores[archetype] += points
 
+    if not scores:
+        raise HTTPException(status_code=400, detail="No valid answers matched the question map.")
+
     sorted_archetypes = sorted(scores.items(), key=lambda x: x[1], reverse=True)
-
-    if not sorted_archetypes:
-        print("No valid answers matched the question map.")
-        return None, {}
-
     primary_score = sorted_archetypes[0][1]
+
     result = {
         "Primary": [],
         "Secondary": [],
@@ -371,24 +373,9 @@ def calculate_archetypes(answers: dict):
     for name, score in sorted_archetypes:
         if score == primary_score:
             result["Primary"].append(name)
-        elif score >= 0.8 * primary_score:
+        elif primary_score > 0 and score >= 0.8 * primary_score:
             result["Secondary"].append(name)
-        elif score >= 0.65 * primary_score:
+        elif primary_score > 0 and score >= 0.65 * primary_score:
             result["Wildcard"].append(name)
 
-    # Display results using PrettyTable
-    table = PrettyTable()
-    table.field_names = ["Archetype", "Category"]
-    
-    for category, archetypes in result.items():
-        for archetype in archetypes:
-            table.add_row([archetype, category])
-
-    print(table)
-    
-    return result["Primary"][0], result
-
-# Example usage:
-answers = {"Q1": "A", "Q2": "C", "Q3": "B", "Q4": "D"} 
-  
-calculate_archetypes(answers)
+    return {"archetypes": result}
