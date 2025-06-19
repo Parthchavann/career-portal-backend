@@ -1,12 +1,12 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from pydantic import BaseModel
 from scoring import calculate_archetypes
-from openai_helper import generate_cover_letter
+from geminiai_helper import generate_cover_letter_from_quiz
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from ats import extract_text_from_pdf, compute_similarity
-from piloterr import get_job_roles_and_salaries
+from adzuna import get_job_roles_and_salaries
 import tempfile
 import os
 
@@ -24,7 +24,7 @@ class QuizSubmission(BaseModel):
 
 class CoverLetterRequest(BaseModel):
     user_info: dict
-    archetype: str
+    archetype: dict
 
 
 @app.post("/submit-quiz")
@@ -38,7 +38,7 @@ def submit_quiz(submission: QuizSubmission):
 @app.post("/generate-cover-letter")
 def generate_letter(request: CoverLetterRequest):
     try:
-        letter = generate_cover_letter(request.user_info, request.archetype)
+        letter = generate_cover_letter_from_quiz(request.user_info, request.archetype)
         return {"cover_letter": letter}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

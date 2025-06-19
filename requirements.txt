@@ -1,6 +1,6 @@
 fastapi
 uvicorn
-openai
+generativeai
 python-dotenv
 PyMuPDF
 scikit-learn

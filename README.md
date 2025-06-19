@@ -3,7 +3,7 @@
 FastAPI backend for:
 - Archetype-based quiz scoring  
 - GPT-powered cover letter generation  
-- Resume analysis and job-role matching using TF-IDF and Piloterr
+- Resume analysis and job-role matching using TF-IDF and ADZUNA
 
 ## Endpoints
 
@@ -25,15 +25,17 @@ FastAPI backend for:
 - **FastAPI** for backend API
 - **PyMuPDF** for PDF text extraction
 - **scikit-learn** for TF-IDF vectorization and cosine similarity
-- **OpenAI API** for LLM-based cover letter generation
-- **Piloterr API** for real-time job role and salary insights
+- **Gemini-2.0-Flash API** for LLM-based cover letter generation
+- **ADZUNA API** for real-time job role and salary insights
 
 ## Deployment
 
 Make sure to set the following environment variables:
 
-- `OPENAI_API_KEY`
+- `GEMINI_API_KEY`
 - `PILOTERR_API_KEY`
+- `ADZUN_APP_ID`
+- `ADZUNA_API_KEY`
 
 - Use **jsPDF** or browser print tools to export the generated cover letter to PDF.
 
