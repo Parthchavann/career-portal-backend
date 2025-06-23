@@ -1,4 +1,4 @@
-from scoring import calculate_archetypes
+from scoring import calculate_archetypes 
 from adzuna import get_job_roles_and_salaries
 import os
 from dotenv import load_dotenv
@@ -25,21 +25,24 @@ def main():
     primary = archetypes.get("Primary", ["N/A"])[0]
     print(f"Your primary archetype is: {primary}\n")
 
-    # Step 2: Ask user for job keyword
+    # Step 2: Ask user for job keyword and location
     keyword = input("Enter a job title or keyword to search on Adzuna (e.g., 'data analyst', 'software engineer'): ").strip()
     if not keyword:
         print("❌ No keyword entered. Exiting.")
         return
 
+    location = input("Enter a location (e.g., 'New York', 'San Francisco', 'Remote'): ").strip()
+    if not location:
+        location = "United States"  # Default fallback
+
     # Step 3: Search Adzuna
-    print(f"\n🔍 Searching top 3 jobs for '{keyword}' with archetype '{primary}'...\n")
-    jobs = get_job_roles_and_salaries([keyword], archetype=primary)
+    print(f"\n🔍 Searching top 3 jobs for '{keyword}' in '{location}' with archetype '{primary}'...\n")
+    jobs = get_job_roles_and_salaries([keyword], archetype=primary, location=location)
 
     if not jobs:
         print("⚠️ No jobs found for your input.")
     else:
-        top_jobs = jobs[:3]  # Explicitly limit to top 3 results
-        for idx, job in enumerate(top_jobs, 1):
+        for idx, job in enumerate(jobs[:3], 1):
             print(f"🔸 Job #{idx}")
             print(f"   🏷️  Title   : {job.get('title')}")
             print(f"   🏢 Company : {job.get('company')}")

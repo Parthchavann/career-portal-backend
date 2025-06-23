@@ -10,7 +10,8 @@ ADZUNA_APP_KEY = os.getenv("ADZUNA_APP_KEY")
 
 BASE_URL = "https://api.adzuna.com/v1/api/jobs/us/search/1"
 
-def get_job_roles_and_salaries(keywords: List[str], archetype: str = None) -> List[Dict]:
+def get_job_roles_and_salaries(keywords: List[str], archetype: str = None, location: str = "") -> List[Dict]:
+
     """
     Fetches top 3 job roles and salary data using the Adzuna API based on provided keywords.
     Optionally includes a user's archetype to tailor the search further.
@@ -36,6 +37,7 @@ def get_job_roles_and_salaries(keywords: List[str], archetype: str = None) -> Li
             "app_id": ADZUNA_APP_ID,
             "app_key": ADZUNA_APP_KEY,
             "what": keyword,
+            "where": location, 
             "results_per_page": 3,
             "content-type": "application/json"
         }

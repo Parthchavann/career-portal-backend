@@ -2,13 +2,16 @@
 
 FastAPI backend for:
 - Archetype-based quiz scoring  
-- GPT-powered cover letter generation  
+- GPT-powered cover letter and resume generator  
 - Resume analysis and job-role matching using TF-IDF and ADZUNA
 
 ## Endpoints
 
 - `POST /submit-quiz`:  
   Returns primary, secondary, and wildcard archetypes based on answers.
+
+- `POST /generate-resume`:  
+  Returns a GPT-generated resume based on user info and archetype.
 
 - `POST /generate-cover-letter`:  
   Returns a GPT-generated cover letter based on user info and archetype.
@@ -17,8 +20,9 @@ FastAPI backend for:
   Accepts resume and job description files (PDF).  
   Uses PyMuPDF, TF-IDF, and cosine similarity to return a percentage match score.
 
-- `GET /suggest-roles?archetype=`:  
-  Integrates with the Piloterr API to return the top 3 job roles and average salary based on the user's archetype.
+- `GET /search-jobs=`:  
+  Integrates with the Adzuna API to return the top 3 job roles and average salary based on the user's archetype.
+
 
 ## Tech Stack
 
@@ -33,7 +37,6 @@ FastAPI backend for:
 Make sure to set the following environment variables:
 
 - `GEMINI_API_KEY`
-- `PILOTERR_API_KEY`
 - `ADZUN_APP_ID`
 - `ADZUNA_API_KEY`
 
