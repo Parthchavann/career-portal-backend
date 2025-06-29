@@ -1,5 +1,18 @@
+from supabase import create_client
+from dotenv import load_dotenv
+import os
 from collections import defaultdict
 from fastapi import HTTPException
+from datetime import datetime
+import uuid
+import json
+
+
+# Load environment
+load_dotenv()
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
 question_map = {
@@ -347,12 +360,11 @@ question_map = {
     }
 }
 
-def calculate_archetypes(answers: dict):
+def calculate_archetypes(answers: dict, user_id: str = "anonymous"):
     if not answers:
         raise HTTPException(status_code=400, detail="No answers provided.")
 
     scores = defaultdict(int)
-
     for q_num, selected in answers.items():
         if q_num in question_map and selected in question_map[q_num]:
             for archetype, points in question_map[q_num][selected]:
@@ -373,9 +385,21 @@ def calculate_archetypes(answers: dict):
     for name, score in sorted_archetypes:
         if score == primary_score:
             result["Primary"].append(name)
-        elif primary_score > 0 and score >= 0.8 * primary_score:
+        elif score >= 0.8 * primary_score:
             result["Secondary"].append(name)
-        elif primary_score > 0 and score >= 0.65 * primary_score:
+        elif score >= 0.65 * primary_score:
             result["Wildcard"].append(name)
+
+    # Save to Supabase
+    try:
+        supabase.table("quiz_results").insert({
+            "id": str(uuid.uuid4()),
+            "user_id": user_id,
+            "answers": answers,
+            "archetypes": result,
+            "created_at": datetime.utcnow().isoformat()
+        }).execute()
+    except Exception as e:
+        print("Supabase insert error:", e)
 
     return {"archetypes": result}

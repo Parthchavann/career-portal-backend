@@ -1,10 +1,13 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from pydantic import BaseModel
+from fastapi import Query
 from scoring import calculate_archetypes
 from geminiai_helper import generate_document_from_quiz
 from fastapi.middleware.cors import CORSMiddleware
 from ats import extract_text_from_pdf, compute_similarity
 from adzuna import get_job_roles_and_salaries
+from supabase import create_client
+from dotenv import load_dotenv
 import tempfile
 import os
 
@@ -16,6 +19,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+load_dotenv()
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ======== Data Models ========
 class QuizSubmission(BaseModel):
@@ -33,9 +42,9 @@ class JobSearchRequest(BaseModel):
 # ======== Routes ========
 
 @app.post("/submit-quiz")
-def submit_quiz(submission: QuizSubmission):
+def submit_quiz(submission: QuizSubmission, user_id: str = "guest_user"):
     try:
-        result = calculate_archetypes(submission.answers)
+        result = calculate_archetypes(submission.answers, user_id=user_id)
         return {"results": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -92,5 +101,27 @@ def search_jobs(request: JobSearchRequest):
             location=request.location
         )
         return {"jobs": results}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/quiz-history")
+def get_quiz_history(user_id: str = Query(..., description="User ID or email to fetch quiz results for")):
+    try:
+        response = supabase.table("quiz_results") \
+            .select("*") \
+            .eq("user_id", user_id) \
+            .order("created_at", desc=True) \
+            .limit(10) \
+            .execute()
+
+        results = response.data or []
+
+        return {
+            "user_id": user_id,
+            "history_count": len(results),
+            "results": results
+        }
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

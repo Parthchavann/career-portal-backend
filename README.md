@@ -23,6 +23,9 @@ FastAPI backend for:
 - `GET /search-jobs=`:  
   Integrates with the Adzuna API to return the top 3 job roles and average salary based on the user's archetype.
 
+- `GET /quiz-history`:  
+  Retrieve the most recent quiz submissions for a specific user, including their selected answers and calculated archetypes. Useful for displaying past results or building user profiles.
+
 
 ## Tech Stack
 
@@ -31,14 +34,20 @@ FastAPI backend for:
 - **scikit-learn** for TF-IDF vectorization and cosine similarity
 - **Gemini-2.0-Flash API** for LLM-based cover letter generation
 - **ADZUNA API** for real-time job role and salary insights
+- **Supabase** backend database to store quiz results
 
-## Deployment
+
+## Deployment 
 
 Make sure to set the following environment variables:
 
 - `GEMINI_API_KEY`
 - `ADZUN_APP_ID`
 - `ADZUNA_API_KEY`
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+
 
 - Use **jsPDF** or browser print tools to export the generated cover letter to PDF.
 
