@@ -2,7 +2,6 @@ import os
 import requests
 from dotenv import load_dotenv
 from typing import List, Dict
-from scoring import calculate_archetypes
 
 load_dotenv()
 ADZUNA_APP_ID = os.getenv("ADZUNA_APP_ID")
@@ -10,15 +9,13 @@ ADZUNA_APP_KEY = os.getenv("ADZUNA_APP_KEY")
 
 BASE_URL = "https://api.adzuna.com/v1/api/jobs/us/search/1"
 
-def get_job_roles_and_salaries(keywords: List[str], archetype: str = None, location: str = "") -> List[Dict]:
-
+def get_job_roles_and_salaries(keywords: List[str], location: str = "") -> List[Dict]:
     """
     Fetches top 3 job roles and salary data using the Adzuna API based on provided keywords.
-    Optionally includes a user's archetype to tailor the search further.
 
     Parameters:
     - keywords (List[str]): List of job-related keywords or skills.
-    - archetype (str, optional): User's archetype to add as an additional context keyword.
+    - location (str): Location to filter jobs by (default: empty).
 
     Returns:
     - List[Dict]: List of job info including title, company, location, salary, and job link.
@@ -27,17 +24,13 @@ def get_job_roles_and_salaries(keywords: List[str], archetype: str = None, locat
         raise ValueError("Missing Adzuna API credentials. Check your .env file.")
 
     results = []
-    search_terms = keywords.copy()
 
-    if archetype:
-        search_terms.append(archetype)
-
-    for keyword in search_terms:
+    for keyword in keywords:
         params = {
             "app_id": ADZUNA_APP_ID,
             "app_key": ADZUNA_APP_KEY,
             "what": keyword,
-            "where": location, 
+            "where": location,
             "results_per_page": 3,
             "content-type": "application/json"
         }
