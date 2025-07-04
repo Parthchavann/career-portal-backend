@@ -360,7 +360,7 @@ question_map = {
     }
 }
 
-def calculate_archetypes(answers: dict, user_id: str = "anonymous"):
+def calculate_archetypes(answers: dict, user_id: str):
     if not answers:
         raise HTTPException(status_code=400, detail="No answers provided.")
 

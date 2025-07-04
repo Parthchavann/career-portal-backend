@@ -6,3 +6,4 @@ PyMuPDF
 scikit-learn
 requests
 supabase
+email-validator

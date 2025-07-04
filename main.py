@@ -1,6 +1,8 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from fastapi import Query
+from typing import Optional, Dict
+from auth import signup_user, login_user
 from scoring import calculate_archetypes
 from geminiai_helper import generate_document_from_quiz
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,7 +30,13 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ======== Data Models ========
 class QuizSubmission(BaseModel):
-    answers: dict
+    answers: Dict[str, str]
+    email: str
+    username: str
+    location: Optional[str] = None
+    bio: Optional[str] = None
+    education: Optional[str] = None
+    links: Optional[str] = None
 
 class DocumentRequest(BaseModel):
     user_info: dict
@@ -39,12 +47,48 @@ class JobSearchRequest(BaseModel):
     archetype: str | None = None
     location: str | None = "United States"
 
+class SignUpRequest(BaseModel):
+    email: EmailStr
+    password: str
+    username: str
+
+class SignInRequest(BaseModel):
+    email: str
+    password: str
+
+
+class UpdateProfileRequest(BaseModel):
+    user_id: str
+    email: Optional[str]
+    username: Optional[str]
+    location: Optional[str]
+    bio: Optional[str]
+    education: Optional[str]
+    links: Optional[str]
+
 # ======== Routes ========
 
 @app.post("/submit-quiz")
-def submit_quiz(submission: QuizSubmission, user_id: str = "guest_user"):
+def submit_quiz(submission: QuizSubmission, user_id: str = Query(..., description="User ID of the quiz taker")):
     try:
         result = calculate_archetypes(submission.answers, user_id=user_id)
+
+        # Update existing user profile, not insert new
+        response = supabase.table("user_info_and_history") \
+            .update({
+                "answers": submission.answers,
+                "archetypes": result["archetypes"],
+                "location": submission.location,
+                "bio": submission.bio,
+                "education": submission.education,
+                "links": submission.links
+            }) \
+            .eq("user_id", user_id) \
+            .execute()
+
+        if response.get("error"):
+            raise HTTPException(status_code=500, detail=response["error"]["message"])
+
         return {"results": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -52,7 +96,7 @@ def submit_quiz(submission: QuizSubmission, user_id: str = "guest_user"):
 @app.post("/generate-cover-letter")
 def generate_cover_letter(request: DocumentRequest):
     try:
-        letter = generate_document_from_quiz(request.user_info, request.quiz_answers, mode="cover_letter")
+        letter = generate_document_from_quiz(request.user_info, mode="cover_letter") # removed request.quiz_answers,
         return {"cover_letter": letter}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -60,7 +104,7 @@ def generate_cover_letter(request: DocumentRequest):
 @app.post("/generate-resume")
 def generate_resume(request: DocumentRequest):
     try:
-        resume = generate_document_from_quiz(request.user_info, request.quiz_answers, mode="resume")
+        resume = generate_document_from_quiz(request.user_info, mode="resume")  # removed request.quiz_answers,
         return {"resume": resume}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -97,22 +141,53 @@ def search_jobs(request: JobSearchRequest):
     try:
         results = get_job_roles_and_salaries(
             keywords=request.keywords,
-            archetype=request.archetype,
+            #archetype=request.archetype,
             location=request.location
         )
         return {"jobs": results}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/signup")
+def signup(request: SignUpRequest):
+    try:
+        return signup_user(request.email, request.password, request.username)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/signin")
+def signin(request: SignInRequest):
+    try:
+        return login_user(request.email, request.password)
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=str(e))
+
+@app.post("/update_profile")
+def update_profile(data: UpdateProfileRequest):
+    try:
+        update_data = {k: v for k, v in data.dict().items() if k != "user_id" and v is not None}
+
+        if not update_data:
+            raise HTTPException(status_code=400, detail="No update fields provided.")
+
+        response = supabase.table("user_info_and_history") \
+            .update(update_data) \
+            .eq("user_id", data.user_id) \
+            .execute()
+
+        if response.get("error"):
+            raise HTTPException(status_code=500, detail=response["error"]["message"])
+
+        return {"message": "Profile updated successfully."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/quiz-history")
-def get_quiz_history(user_id: str = Query(..., description="User ID or email to fetch quiz results for")):
+def get_quiz_history(user_id: str = Query(..., description="User ID to fetch quiz results for")):
     try:
-        response = supabase.table("quiz_results") \
+        response = supabase.table("user_info_and_history") \
             .select("*") \
             .eq("user_id", user_id) \
-            .order("created_at", desc=True) \
-            .limit(10) \
             .execute()
 
         results = response.data or []
@@ -122,6 +197,5 @@ def get_quiz_history(user_id: str = Query(..., description="User ID or email to 
             "history_count": len(results),
             "results": results
         }
-
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

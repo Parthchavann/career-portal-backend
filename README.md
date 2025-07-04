@@ -4,6 +4,7 @@ FastAPI backend for:
 - Archetype-based quiz scoring  
 - GPT-powered cover letter and resume generator  
 - Resume analysis and job-role matching using TF-IDF and ADZUNA
+- user authenication 
 
 ## Endpoints
 
@@ -25,6 +26,16 @@ FastAPI backend for:
 
 - `GET /quiz-history`:  
   Retrieve the most recent quiz submissions for a specific user, including their selected answers and calculated archetypes. Useful for displaying past results or building user profiles.
+
+- `GET /signup`:  
+  Create an account using an email, username, and password 
+
+- `GET /signin`:  
+  Sign in with email and password
+  
+- `GET /update_profile`:  
+  update profile with more elective information and it goes to the database
+  
 
 
 ## Tech Stack
