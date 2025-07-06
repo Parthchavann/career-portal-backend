@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File, Query
 from pydantic import BaseModel, EmailStr
 from typing import Optional, Dict
-from auth import signup_user, login_user, admin_signup_user
+from auth import signup_user, login_user
 from scoring import calculate_archetypes
 from geminiai_helper import generate_document_from_quiz
 from fastapi.middleware.cors import CORSMiddleware
@@ -64,13 +64,6 @@ class UpdateProfileRequest(BaseModel):
     education: Optional[str]
     links: Optional[str]
 
-
-class AdminSignUpRequest(BaseModel):
-    user_id: str  # You can copy UUIDs from Supabase Auth table
-    email: EmailStr
-    username: str
-
-
 # ======== Routes ========
 
 @app.get("/")
@@ -94,8 +87,9 @@ def submit_quiz(submission: QuizSubmission, user_id: str = Query(...)):
             .eq("user_id", user_id) \
             .execute()
 
-        if not response.data:
-            raise HTTPException(status_code=500, detail="Supabase update failed.")
+        if response.status_code >= 400:
+            raise HTTPException(status_code=500, detail=response.data)
+
 
         return {"results": result}
     except Exception as e:
@@ -162,14 +156,6 @@ def signup(request: SignUpRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/admin-signup")
-def admin_signup(request: SignUpRequest):
-    try:
-        from auth import admin_signup_user
-        return admin_signup_user(request.email, request.password, request.username)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 @app.post("/signin")
 def signin(request: SignInRequest):
     try:
@@ -190,8 +176,9 @@ def update_profile(data: UpdateProfileRequest):
             .eq("user_id", data.user_id) \
             .execute()
 
-        if not response.data:
-            raise HTTPException(status_code=500, detail="Supabase update failed.")
+        if response.status_code >= 400:
+            raise HTTPException(status_code=500, detail=response.data)
+
 
         return {"message": "Profile updated successfully."}
     except Exception as e:
@@ -205,13 +192,15 @@ def get_quiz_history(user_id: str = Query(...)):
             .eq("user_id", user_id) \
             .execute()
 
-        if not response.data:
-            raise HTTPException(status_code=404, detail="No quiz history found.")
+        if response.error:
+            raise HTTPException(status_code=500, detail=response.error.message)
+
+        results = response.data or []
 
         return {
             "user_id": user_id,
-            "history_count": len(response.data),
-            "results": response.data
+            "history_count": len(results),
+            "results": results
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
