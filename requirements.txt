@@ -7,3 +7,5 @@ scikit-learn
 requests
 supabase
 email-validator
+python-multipart
+
