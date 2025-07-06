@@ -1,6 +1,5 @@
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, Query
 from pydantic import BaseModel, EmailStr
-from fastapi import Query
 from typing import Optional, Dict
 from auth import signup_user, login_user
 from scoring import calculate_archetypes
@@ -15,6 +14,7 @@ import os
 
 app = FastAPI()
 
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -22,13 +22,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
+# Supabase init
 load_dotenv()
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# ======== Data Models ========
+# ======== Models ========
 class QuizSubmission(BaseModel):
     answers: Dict[str, str]
     email: str
@@ -40,7 +40,6 @@ class QuizSubmission(BaseModel):
 
 class DocumentRequest(BaseModel):
     user_info: dict
-    # quiz_answers: dict
 
 class JobSearchRequest(BaseModel):
     keywords: list[str]
@@ -55,7 +54,6 @@ class SignUpRequest(BaseModel):
 class SignInRequest(BaseModel):
     email: str
     password: str
-
 
 class UpdateProfileRequest(BaseModel):
     user_id: str
@@ -73,11 +71,10 @@ def read_root():
     return {"message": "Career Portal API is live 🚀"}
 
 @app.post("/submit-quiz")
-def submit_quiz(submission: QuizSubmission, user_id: str = Query(..., description="User ID of the quiz taker")):
+def submit_quiz(submission: QuizSubmission, user_id: str = Query(...)):
     try:
         result = calculate_archetypes(submission.answers, user_id=user_id)
 
-        # Update existing user profile, not insert new
         response = supabase.table("user_info_and_history") \
             .update({
                 "answers": submission.answers,
@@ -93,7 +90,6 @@ def submit_quiz(submission: QuizSubmission, user_id: str = Query(..., descriptio
         if response.error:
             raise HTTPException(status_code=500, detail=response.error.message)
 
-
         return {"results": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -101,7 +97,7 @@ def submit_quiz(submission: QuizSubmission, user_id: str = Query(..., descriptio
 @app.post("/generate-cover-letter")
 def generate_cover_letter(request: DocumentRequest):
     try:
-        letter = generate_document_from_quiz(request.user_info, mode="cover_letter") # removed request.quiz_answers,
+        letter = generate_document_from_quiz(request.user_info, mode="cover_letter")
         return {"cover_letter": letter}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -109,7 +105,7 @@ def generate_cover_letter(request: DocumentRequest):
 @app.post("/generate-resume")
 def generate_resume(request: DocumentRequest):
     try:
-        resume = generate_document_from_quiz(request.user_info, mode="resume")  # removed request.quiz_answers,
+        resume = generate_document_from_quiz(request.user_info, mode="resume")
         return {"resume": resume}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -146,7 +142,6 @@ def search_jobs(request: JobSearchRequest):
     try:
         results = get_job_roles_and_salaries(
             keywords=request.keywords,
-            #archetype=request.archetype,
             location=request.location
         )
         return {"jobs": results}
@@ -180,20 +175,23 @@ def update_profile(data: UpdateProfileRequest):
             .eq("user_id", data.user_id) \
             .execute()
 
-        if response.get("error"):
-            raise HTTPException(status_code=500, detail=response["error"]["message"])
+        if response.error:
+            raise HTTPException(status_code=500, detail=response.error.message)
 
         return {"message": "Profile updated successfully."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/quiz-history")
-def get_quiz_history(user_id: str = Query(..., description="User ID to fetch quiz results for")):
+def get_quiz_history(user_id: str = Query(...)):
     try:
         response = supabase.table("user_info_and_history") \
             .select("*") \
             .eq("user_id", user_id) \
             .execute()
+
+        if response.error:
+            raise HTTPException(status_code=500, detail=response.error.message)
 
         results = response.data or []
 
