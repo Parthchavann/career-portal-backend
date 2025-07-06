@@ -1,6 +1,35 @@
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-.env
+*.py[cod]
+*.so
+*.egg-info/
+
+# Virtual environments
+.venv/
+env/
 venv/
+
+# OS junk files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Git and editor config
+.git
+.gitignore
+.vscode/
+.idea/
+
+# Testing
+tests/
+*.pytest_cache/
+.coverage
+
+# Misc
+*.env
+*.sqlite3
+node_modules/
+dist/
+build/
