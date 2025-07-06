@@ -40,7 +40,7 @@ class QuizSubmission(BaseModel):
 
 class DocumentRequest(BaseModel):
     user_info: dict
-    quiz_answers: dict
+    # quiz_answers: dict
 
 class JobSearchRequest(BaseModel):
     keywords: list[str]

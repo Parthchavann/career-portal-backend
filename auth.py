@@ -13,20 +13,19 @@ if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
 
 supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
-
 def signup_user(email: str, password: str, username: str):
     try:
         # Create auth user
         response = supabase.auth.sign_up({"email": email, "password": password})
 
-        if response.get("error"):
-            raise HTTPException(status_code=400, detail=response["error"]["message"])
+        if response.error:
+            raise HTTPException(status_code=400, detail=response.error.message)
 
-        user = response.get("user")
+        user = response.user
         if not user:
             raise HTTPException(status_code=400, detail="Failed to create user.")
 
-        user_id = user["id"]
+        user_id = user.id
 
         # Insert initial profile
         insert_response = supabase.table("user_info_and_history").insert({
@@ -41,8 +40,8 @@ def signup_user(email: str, password: str, username: str):
             "links": None
         }).execute()
 
-        if insert_response.get("error"):
-            raise HTTPException(status_code=500, detail=insert_response["error"]["message"])
+        if insert_response.error:
+            raise HTTPException(status_code=500, detail=insert_response.error.message)
 
         return {"message": "User created successfully.", "user_id": user_id}
     
@@ -54,19 +53,22 @@ def login_user(email: str, password: str):
     try:
         response = supabase.auth.sign_in_with_password({"email": email, "password": password})
 
-        if response.get("error"):
-            raise HTTPException(status_code=401, detail="Invalid credentials.")
+        if response.error:
+            raise HTTPException(status_code=401, detail=response.error.message)
 
-        session = response.get("session")
-        user = response.get("user")
+        session = response.session
+        user = response.user
 
         if not session or not user:
             raise HTTPException(status_code=401, detail="Login failed.")
 
         return {
-            "access_token": session.get("access_token"),
-            "refresh_token": session.get("refresh_token"),
-            "user": user
+            "access_token": session.access_token,
+            "refresh_token": session.refresh_token,
+            "user": {
+                "id": user.id,
+                "email": user.email
+            }
         }
 
     except Exception as e:
