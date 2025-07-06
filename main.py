@@ -90,8 +90,9 @@ def submit_quiz(submission: QuizSubmission, user_id: str = Query(..., descriptio
             .eq("user_id", user_id) \
             .execute()
 
-        if response.get("error"):
-            raise HTTPException(status_code=500, detail=response["error"]["message"])
+        if response.error:
+            raise HTTPException(status_code=500, detail=response.error.message)
+
 
         return {"results": result}
     except Exception as e:

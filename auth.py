@@ -52,24 +52,16 @@ def signup_user(email: str, password: str, username: str):
 def login_user(email: str, password: str):
     try:
         response = supabase.auth.sign_in_with_password({"email": email, "password": password})
-
         if response.error:
-            raise HTTPException(status_code=401, detail=response.error.message)
-
-        session = response.session
-        user = response.user
-
-        if not session or not user:
-            raise HTTPException(status_code=401, detail="Login failed.")
+            raise HTTPException(status_code=401, detail="Invalid credentials.")
 
         return {
-            "access_token": session.access_token,
-            "refresh_token": session.refresh_token,
+            "access_token": response.session.access_token,
+            "refresh_token": response.session.refresh_token,
             "user": {
-                "id": user.id,
-                "email": user.email
+                "id": response.user.id,
+                "email": response.user.email
             }
         }
-
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
