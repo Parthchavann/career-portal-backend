@@ -15,6 +15,7 @@ supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
 def signup_user(email: str, password: str, username: str):
     try:
+        # Create auth user
         response = supabase.auth.sign_up({"email": email, "password": password})
 
         if response.error:
@@ -26,12 +27,13 @@ def signup_user(email: str, password: str, username: str):
 
         user_id = user.id
 
+        # Insert initial profile
         insert_response = supabase.table("user_info_and_history").insert({
             "user_id": user_id,
             "username": username,
             "email": email,
-            "answers": {},
-            "archetypes": {},
+            "answers": {},         # empty JSON object
+            "archetypes": {},      # empty JSON object
             "location": None,
             "bio": None,
             "education": None,
@@ -46,26 +48,6 @@ def signup_user(email: str, password: str, username: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-def admin_signup_user(user_id: str, email: str, username: str):
-    try:
-        insert_response = supabase.table("user_info_and_history").insert({
-            "user_id": user_id,
-            "username": username,
-            "email": email,
-            "answers": {},
-            "archetypes": {},
-            "location": None,
-            "bio": None,
-            "education": None,
-            "links": None
-        }).execute()
-
-        if insert_response.error:
-            raise HTTPException(status_code=500, detail=insert_response.error.message)
-
-        return {"message": "User created via admin successfully.", "user_id": user_id}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 def login_user(email: str, password: str):
     try:
