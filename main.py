@@ -87,8 +87,9 @@ def submit_quiz(submission: QuizSubmission, user_id: str = Query(...)):
             .eq("user_id", user_id) \
             .execute()
 
-        if response.error:
-            raise HTTPException(status_code=500, detail=response.error.message)
+        if response.status_code >= 400:
+            raise HTTPException(status_code=500, detail=response.data)
+
 
         return {"results": result}
     except Exception as e:
@@ -175,8 +176,9 @@ def update_profile(data: UpdateProfileRequest):
             .eq("user_id", data.user_id) \
             .execute()
 
-        if response.error:
-            raise HTTPException(status_code=500, detail=response.error.message)
+        if response.status_code >= 400:
+            raise HTTPException(status_code=500, detail=response.data)
+
 
         return {"message": "Profile updated successfully."}
     except Exception as e:
