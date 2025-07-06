@@ -68,6 +68,10 @@ class UpdateProfileRequest(BaseModel):
 
 # ======== Routes ========
 
+@app.get("/")
+def read_root():
+    return {"message": "Career Portal API is live 🚀"}
+
 @app.post("/submit-quiz")
 def submit_quiz(submission: QuizSubmission, user_id: str = Query(..., description="User ID of the quiz taker")):
     try:
